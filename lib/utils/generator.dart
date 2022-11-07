@@ -4,6 +4,8 @@ import 'package:flutter_games/model/coordinate.dart';
 import 'package:flutter_games/model/stack.dart';
 
 import '../model/board.dart';
+import '../model/box.dart';
+import 'bord_utils.dart';
 
 /// Generate a random coordinate for entrance/box in board
 ///
@@ -23,18 +25,18 @@ Coordinate randomEntryCoordinate(int nbRow, int nbColumn) {
 Coordinate randomExitCoordinate(int nbRow, int nbColumn, {Coordinate? entryCoordinate}) {
   var isHorizontalSideDoor = Random().nextBool();
   var x = isHorizontalSideDoor ? Random().nextInt(nbRow) : nbRow - 1;
-  while(entryCoordinate != null && entryCoordinate.x == x){
+  while (entryCoordinate != null && entryCoordinate.x == x) {
     x = isHorizontalSideDoor ? Random().nextInt(nbRow) : nbRow - 1;
   }
   var y = isHorizontalSideDoor ? nbColumn - 1 : Random().nextInt(nbColumn);
-  while(entryCoordinate != null && entryCoordinate.y == y){
+  while (entryCoordinate != null && entryCoordinate.y == y) {
     y = isHorizontalSideDoor ? nbColumn - 1 : Random().nextInt(nbColumn);
   }
   return Coordinate(x: x, y: y);
 }
 
 Board perfectMazeGenerator(int nbRow, int nbColumn) {
-  Board board = Board.full(nbRow, nbColumn);
+  Board board = generateFullBoard(nbRow, nbColumn);
   var hasBeenVisited = List.generate(nbRow, (index) => List.generate(nbColumn, (_) => false));
   generateBoardEntry(nbRow, nbColumn, board);
   Stack<Coordinate> stack = Stack<Coordinate>();
@@ -59,7 +61,7 @@ Board perfectMazeGenerator(int nbRow, int nbColumn) {
 
 void generateBoardExit(Board board, int nbRow, int nbColumn, {Coordinate? entryCoordinate}) {
   board.exitCoordinate = randomExitCoordinate(nbRow, nbColumn, entryCoordinate: entryCoordinate);
-  if (board.exitCoordinate.y == nbColumn) {
+  if (board.exitCoordinate.y == nbColumn-1) {
     board.labyrinth[board.exitCoordinate.x][board.exitCoordinate.y].isRightSideWall = false;
   } else {
     board.labyrinth[board.exitCoordinate.x][board.exitCoordinate.y].isBottomSideWall = false;
@@ -112,4 +114,46 @@ List<Coordinate> _getInvisitedNeighbors(
     invisitedNeighbors.add(Coordinate(x: currentCell.x, y: currentCell.y - 1));
   }
   return invisitedNeighbors;
+}
+
+Board generateFullBoard(int nbRow, int nbColumn) {
+  var labyrinth = List.generate(
+      nbRow,
+      (index) => List.generate(nbColumn,
+          (_) => Box(isBottomSideWall: true, isLeftSideWall: true, isRightSideWall: true, isTopSideWall: true)));
+  return Board(labyrinth: labyrinth, nbRow: nbRow, nbColumn: nbColumn, entryCoordinate: const Coordinate(x: 0, y: 0), exitCoordinate: const Coordinate(x: 0, y: 0));
+}
+
+Board generateBoardfromLength(int nbRow, int nbColumn) {
+  var labyrinth = List.generate(nbRow, (index) => List.generate(nbColumn, (_) => Box()));
+
+  for (int i = 0; i < nbRow; i++) {
+    labyrinth[i][0].isLeftSideWall = true;
+    labyrinth[i][nbColumn - 1].isRightSideWall = true;
+  }
+
+  for (int j = 0; j < nbColumn; j++) {
+    labyrinth[0][j].isTopSideWall = true;
+    labyrinth[nbRow - 1][j].isBottomSideWall = true;
+  }
+
+  var entryCoordinate = randomEntryCoordinate(nbRow, nbColumn);
+  var isTopSideEntry = entryCoordinate.x == 0;
+  if (isTopSideEntry) {
+    labyrinth[entryCoordinate.x][entryCoordinate.y].isTopSideWall = false;
+  } else {
+    labyrinth[entryCoordinate.x][entryCoordinate.y].isLeftSideWall = false;
+  }
+
+  var exitCoordinate = randomExitCoordinate(nbRow, nbColumn);
+  var isBottomExit = exitCoordinate.x == nbRow - 1;
+  if (isBottomExit) {
+    labyrinth[exitCoordinate.x][exitCoordinate.y].isBottomSideWall = false;
+  } else {
+    labyrinth[exitCoordinate.x][exitCoordinate.y].isRightSideWall = false;
+  }
+  var board = Board(labyrinth: labyrinth, nbRow: nbRow, nbColumn: nbColumn, entryCoordinate: entryCoordinate, exitCoordinate: exitCoordinate);
+  populateBoard(board);
+
+  return board;
 }

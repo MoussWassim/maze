@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_games/Providers/boardNotifier.dart';
 import 'package:flutter_games/model/coordinate.dart';
 import 'package:flutter_games/utils/generator.dart';
 import 'package:flutter_games/utils/solution_utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'model/board.dart';
 import 'widget/display_board.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -26,21 +28,21 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   late Board board;
   List<Coordinate> solution = [];
   @override
   void initState() {
-    board = perfectMazeGenerator(5, 4);
+    board = perfectMazeGenerator(30, 40);
     super.initState();
   }
 
@@ -50,16 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: ElevatedButton(
             child: const Text("solution"),
-            onPressed: () {
-              setState(() {
-                solution = SolutionUtils().getOneSolution(board, board.entryCoordinate);
-                print(solution);
-              });
+            onPressed: () async {
+              solution = SolutionUtils().getOneSolution(board, board.entryCoordinate);
+               await ref.read(labyrinthSolutionProvider.notifier).addListStepWithSleep(solution);
             }),
       ),
       body: Container(
         padding: const EdgeInsets.only(top: 18),
-        child: Center(child: DisplayBoard(board: board, solution: solution)),
+        child: Center(child: DisplayBoard(board: board)),
       ),
     );
   }

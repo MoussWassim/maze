@@ -3,17 +3,20 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_games/model/board.dart';
 import 'package:flutter_games/model/coordinate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DisplayBoard extends StatelessWidget {
+import '../Providers/boardNotifier.dart';
+
+class DisplayBoard extends ConsumerWidget {
   final Board board;
-  final List<Coordinate> solution;
-  const DisplayBoard({Key? key, required this.board, this.solution = const []}) : super(key: key);
+  const DisplayBoard({Key? key, required this.board}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     var screenMinSize = min(MediaQuery.of(context).size.height, MediaQuery.of(context).size.height);
     var maxBoxSize = (screenMinSize - 100) / max(board.nbRow, board.nbColumn);
-    print(solution.contains(Coordinate(x: 2, y: 2)));
+    List<Coordinate> solution = ref.watch(labyrinthSolutionProvider);
+
     return SizedBox(
       width: screenMinSize,
       height: screenMinSize,
